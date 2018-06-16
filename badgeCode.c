@@ -8,7 +8,7 @@ void setupPins(){
 }
 
 void setupTimer(){
-  TCCR0B |= (1 << CS01) | (1 << CS00); //Enable /64 pre-scaler
+  TCCR0B |= (1 << CS01) | (1 << CS00); // Enable /64 pre-scaler
   TIMSK |= (1 << TOIE0);               // Enable overflow interrupt
   sei();
 }
@@ -24,20 +24,44 @@ int buttonPressed() {
 
 void runRoulette(){
 	uint8_t currentLED = (1 << PB0);
-	PORTB = (1 << PB0) | (1 << PB5);
-	for (int i = 0; i < 5; i++){							// Do 5 full LED revolutions
-		for (int x = 0; x < 5; x++){						// To cycle through each LED
-			_delay_ms(50);
-			if ((currentLED << 1) == (1 << PB5)){		// If currentLED is out of the LED range
-				currentLED = (1 << PB0);
+	PORTB = currentLED | (1 << PB0);
+	int delayTime = 50;
+	int delayIncrement = 10;
+	int maxDelay = 500
+	int buttonReleased = 0;
+	int flashSpeed = 250;
+	int flashCount = 3;
+	while (1) {
+		_delay_ms(delayTime);
+		if ((currentLED << 1) == (1 << PB5)){		// If currentLED is out of the LED range
+			currentLED = (1 << PB0);
+		}
+		else {
+			currentLED <<= 1;
+		}
+		PORTB = currentLED | (1 << PB5);		// Light the LED
+
+		if buttonReleased{									// Button has already been released, check for winner or increment delay time
+			if !(delayTime+delayIncrement >= maxDelay){
+				delayTime += delayIncrement;
 			}
-			else {
-				currentLED <<= 1;
+			else {										// Winner Winner Chicken Dinner! Flash the winner
+				_delay_ms(maxDelay);
+				for (i = 0; i < flashCount*2; i++){
+					PORTB ^= currentLED;	//	Toggle LED
+					_delay_ms(flashSpeed);
+				}
+				break;									//	Break out of runRoulette
 			}
-			PORTB = currentLED | (1 << PB5);
+		}
+		else {
+			if !buttonPressed(){
+				buttonReleased = 1;
+			}
 		}
 	}
 }
+
 
 volatile int timesPressed = 0;
 volatile int programRunning = 0;
