@@ -22,17 +22,23 @@ int buttonPressed() {
   }
 }
 
+void delay_ms(int count) {			// Dumbest thing, you can't pass variables directly to _delay_ms...
+  while(count--) {
+    _delay_ms(1);
+  }
+}
+
 void runRoulette(){
 	uint8_t currentLED = (1 << PB0);
 	PORTB = currentLED | (1 << PB0);
 	int delayTime = 50;
 	int delayIncrement = 10;
-	int maxDelay = 500
+	int maxDelay = 500;
 	int buttonReleased = 0;
 	int flashSpeed = 250;
 	int flashCount = 3;
 	while (1) {
-		_delay_ms(delayTime);
+		delay_ms(delayTime);
 		if ((currentLED << 1) == (1 << PB5)){		// If currentLED is out of the LED range
 			currentLED = (1 << PB0);
 		}
@@ -41,21 +47,21 @@ void runRoulette(){
 		}
 		PORTB = currentLED | (1 << PB5);		// Light the LED
 
-		if buttonReleased{									// Button has already been released, check for winner or increment delay time
-			if !(delayTime+delayIncrement >= maxDelay){
+		if (buttonReleased){									// Button has already been released, check for winner or increment delay time
+			if (!(delayTime+delayIncrement >= maxDelay)){
 				delayTime += delayIncrement;
 			}
 			else {										// Winner Winner Chicken Dinner! Flash the winner
-				_delay_ms(maxDelay);
-				for (i = 0; i < flashCount*2; i++){
+				delay_ms(maxDelay);
+				for (int i = 0; i < flashCount*2; i++){
 					PORTB ^= currentLED;	//	Toggle LED
-					_delay_ms(flashSpeed);
+					delay_ms(flashSpeed);
 				}
 				break;									//	Break out of runRoulette
 			}
 		}
 		else {
-			if !buttonPressed(){
+			if (!buttonPressed()){
 				buttonReleased = 1;
 			}
 		}
