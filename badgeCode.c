@@ -23,18 +23,19 @@ int buttonPressed() {
 }
 
 void runRoulette(){
-	currentLED = (1 << PB0);
+	uint8_t currentLED = (1 << PB0);
 	PORTB = (1 << PB0) | (1 << PB5);
-	int revolutions = 5;
-	for (int i = 0; i < revolutions; i++){
-		if (currentLED << 1) == (1 << PB5){
-			currentLED = (1 << PB0);
+	for (int i = 0; i < 5; i++){							// Do 5 full LED revolutions
+		for (int x = 0; x < 5; x++){						// To cycle through each LED
+			_delay_ms(50);
+			if ((currentLED << 1) == (1 << PB5)){		// If currentLED is out of the LED range
+				currentLED = (1 << PB0);
+			}
+			else {
+				currentLED <<= 1;
+			}
+			PORTB = currentLED | (1 << PB5);
 		}
-		else {
-			currentLED <<= 1;
-		}
-		PORTB = currentLED | (1 << PB5);
-
 	}
 }
 
