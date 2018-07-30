@@ -28,9 +28,9 @@ void delay_ms(int count) {			// Dumbest thing, you can't pass variables directly
   }
 }
 
-void runRoulette(){
-	uint8_t currentLED = (1 << PB0);
-	PORTB = currentLED | (1 << PB0);
+void runRoulette(uint8_t startPin){
+	uint8_t currentLED = startPin;
+	PORTB = currentLED | (1 << PB5);
 	int delayTime = 50;
 	int delayIncrement = 10;
 	int maxDelay = 500;
@@ -47,6 +47,10 @@ void runRoulette(){
 		}
 		PORTB = currentLED | (1 << PB5);		// Light the LED
 
+    if (delayTime >= 300){
+      delayIncrement = 25;
+    }
+
 		if (buttonReleased){									// Button has already been released, check for winner or increment delay time
 			if (!(delayTime+delayIncrement >= maxDelay)){
 				delayTime += delayIncrement;
@@ -57,6 +61,7 @@ void runRoulette(){
 					PORTB ^= currentLED;	//	Toggle LED
 					delay_ms(flashSpeed);
 				}
+        PORTB = (1 << PB5);     // Ensure LEDs are turned off
 				break;									//	Break out of runRoulette
 			}
 		}
@@ -68,17 +73,21 @@ void runRoulette(){
 	}
 }
 
-
 volatile int timesPressed = 0;
 volatile int programRunning = 0;
+volatile unint8_t startingPin = (1 << PB0);
 ISR(TIMER0_OVF_vect){
   if (buttonPressed() && !programRunning){  // Checking for program running may not be needed at all..
     timesPressed++;
     if (timesPressed >= 3){               // 64 pre-scaler at 1Mhz overflows every 0.016384s, so ~50ms to trigger
       programRunning = 1;
-      runRoulette();
+      runRoulette(startingPin);
       timesPressed = 0;
       programRunning = 0;
+      startingPin <<= 2;                   // increment the starting pin by 2 to give some sort of extra randomness
+      if (startingPin >= PB5){
+        startingPin >>= 5;
+      }
     }
   }
   else {
