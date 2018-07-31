@@ -48,14 +48,12 @@ void runRoulette(uint8_t startPin){
 		PORTB = currentLED | (1 << PB5);		// Light the LED
 
     if (delayTime >= 300){
-      delayIncrement = 25;
+      delayIncrement = 30;
     }
 
 		if (buttonReleased){									// Button has already been released, check for winner or increment delay time
-			if (!(delayTime+delayIncrement >= maxDelay)){
-				delayTime += delayIncrement;
-			}
-			else {										// Winner Winner Chicken Dinner! Flash the winner
+
+			if (delayTime > maxDelay){										// Winner Winner Chicken Dinner! Flash the winner
 				delay_ms(maxDelay);
 				for (int i = 0; i < flashCount*2; i++){
 					PORTB ^= currentLED;	//	Toggle LED
@@ -64,6 +62,9 @@ void runRoulette(uint8_t startPin){
         PORTB = (1 << PB5);     // Ensure LEDs are turned off
 				break;									//	Break out of runRoulette
 			}
+      else{
+        delayTime += delayIncrement;
+      }
 		}
 		else {
 			if (!buttonPressed()){
@@ -75,7 +76,7 @@ void runRoulette(uint8_t startPin){
 
 volatile int timesPressed = 0;
 volatile int programRunning = 0;
-volatile unint8_t startingPin = (1 << PB0);
+volatile uint8_t startingPin = (1 << PB0);
 ISR(TIMER0_OVF_vect){
   if (buttonPressed() && !programRunning){  // Checking for program running may not be needed at all..
     timesPressed++;
@@ -85,7 +86,7 @@ ISR(TIMER0_OVF_vect){
       timesPressed = 0;
       programRunning = 0;
       startingPin <<= 2;                   // increment the starting pin by 2 to give some sort of extra randomness
-      if (startingPin >= PB5){
+      if (startingPin >= (1 << PB5)){
         startingPin >>= 5;
       }
     }
@@ -95,10 +96,64 @@ ISR(TIMER0_OVF_vect){
   }
 }
 
+void spinClearPattern(int delay_time){
+  PORTB = (1 << PB5);
+  for (int x = 0; x < 2; x++){
+    for (int i = 0; i < 5; i++){
+      PORTB ^= (1 << i);
+      delay_ms(delay_time);
+    }
+  }
+}
+
+void randomAppearPattern(int delay_time){
+  PORTB = (1 << PB5);
+  int appear[5] = {PB3,PB1,PB4,PB2,PB0};
+  delay_ms(delay_time);
+  for (int i = 0; i < 5; i++){
+    PORTB |= (1 << appear[i]);
+    delay_ms(delay_time);
+  }
+}
+
+void randomClearPattern(int delay_time){
+  PORTB = 0b00111111;
+  int clear[5] = {PB2,PB1,PB4,PB0,PB3};
+  for (int i = 0; i < 5; i++){
+    PORTB &= ~(1 << clear[i]);
+    delay_ms(delay_time);
+  }
+}
+
+void flashLightsPattern(int delay_time){
+  PORTB = 0b00111111;
+  delay_ms(delay_time);
+  PORTB = (1 << PB5);
+  delay_ms(delay_time);
+}
+
+void runFunMode(){
+  spinClearPattern(500);
+  randomAppearPattern(1000);
+  randomClearPattern(1000);
+  flashLightsPattern(500);
+  flashLightsPattern(500);
+  flashLightsPattern(500);
+}
+
 int main(void) {
   setupPins();
   setupTimer();
+  int funMode = 0;
+  if (buttonPressed()){   // If button is held on start, do special effects while idle
+    funMode = 1;
+  }
   while (1){
-    continue;
+    if (funMode){
+      runFunMode();
+    }
+    else {
+      continue;
+    }
   }
 }
