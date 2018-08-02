@@ -5,9 +5,40 @@
 //Global Variables
 int funMode = 0;
 
+// After testing, found that the lights are not sequential to PB bits on the board
+// Super hacky fix to light them up in the right order
+uint8_t bitSwapMachine(uint8_t lightBits){
+  uint8_t finalByte = lightBits;
+  if ((1 << PB2) & lightBits){  // If PB2 bit is 1, set PB3 to 1 (else 0)
+    finalByte |= (1 << PB3);
+  }
+  else {
+    finalByte &= ~(1 << PB3);
+  }
+  if ((1 << PB3) & lightBits){  // If PB3 bit is 1, set PB4 to 1 (else 0)
+    finalByte |= (1 << PB4);
+  }
+  else {
+    finalByte &= ~(1 << PB4);
+  }
+  if ((1 << PB4) & lightBits){  // If PB4 bit is 1, set PB2 to 1 (else 0)
+    finalByte |= (1 << PB2);
+  }
+  else {
+    finalByte &= ~(1 << PB2);
+  }
+  return finalByte;
+}
+
+// Related to hacky PB bit fix, but also flips the light bits as another issue was found
+// The board has the lights attached to VCC vs. ground (my bad), flip the bits since 1 = off, 0 = on
+uint8_t bitFixMachine(uint8_t lightBits){
+  return bitSwapMachine(lightBits) ^ 0b00011111;  // Flip the lights bits
+}
+
 void setupPins(){
   DDRB = ~(1 << PB5);       // Set all pins as output except PB5 (button)
-  PORTB = (1 << PB5);    		// Enable pullup resistor
+  PORTB = bitFixMachine((1 << PB5));    		// Enable pullup resistor
 }
 
 void setupTimer(){
@@ -33,7 +64,7 @@ void delay_ms(int count) {			// Dumbest thing, you can't pass variables directly
 
 void runRoulette(uint8_t startPin){
 	uint8_t currentLED = startPin;
-	PORTB = currentLED | (1 << PB5);
+	PORTB = bitFixMachine(currentLED) | (1 << PB5);
 	int delayTime = 50;
 	int delayIncrement = 10;
 	int maxDelay = 500;
@@ -48,7 +79,7 @@ void runRoulette(uint8_t startPin){
 		else {
 			currentLED <<= 1;
 		}
-		PORTB = currentLED | (1 << PB5);		// Light the LED
+		PORTB = bitFixMachine(currentLED) | (1 << PB5);		// Light the LED
 
     if (delayTime >= 250){
       delayIncrement = 30;
@@ -63,10 +94,10 @@ void runRoulette(uint8_t startPin){
 			if (delayTime > maxDelay){										// Winner Winner Chicken Dinner! Flash the winner
 				delay_ms(delayTime*2);
 				for (int i = 0; i < flashCount*2; i++){
-					PORTB ^= currentLED;	//	Toggle LED
+					PORTB ^= bitSwapMachine(currentLED);	//	Toggle LED
 					delay_ms(flashSpeed);
 				}
-        PORTB = (1 << PB5);     // Ensure LEDs are turned off
+        PORTB = bitFixMachine((1 << PB5));     // Ensure LEDs are turned off
         if (funMode){
           delay_ms(750);       // Delay helps with special effects (or else they start too soon)
         }
@@ -109,58 +140,58 @@ ISR(TIMER0_OVF_vect){
 }
 
 void spinClearPattern(int delay_time){
-  PORTB = (1 << PB5);
+  PORTB = bitFixMachine((1 << PB5));
   for (int x = 0; x < 2; x++){
     for (int i = 0; i < 5; i++){
-      PORTB ^= (1 << i);
+      PORTB ^= bitSwapMachine((1 << i));
       delay_ms(delay_time);
     }
   }
 }
 
 void randomAppearPattern(int delay_time){
-  PORTB = (1 << PB5);
+  PORTB = bitFixMachine((1 << PB5));
   int appear[5] = {PB3,PB1,PB4,PB2,PB0};
   delay_ms(delay_time);
   for (int i = 0; i < 5; i++){
-    PORTB |= (1 << appear[i]);
+    PORTB ^= bitSwapMachine((1 << appear[i]));
     delay_ms(delay_time);
   }
 }
 
 void randomClearPattern(int delay_time){
-  PORTB = 0b00111111;
+  PORTB = bitFixMachine(0b00111111);
   int clear[5] = {PB2,PB1,PB4,PB0,PB3};
   for (int i = 0; i < 5; i++){
-    PORTB &= ~(1 << clear[i]);
+    PORTB |= bitSwapMachine((1 << clear[i]) | (1 << PB5));
     delay_ms(delay_time);
   }
 }
 
 void flashLightsPattern(int delay_time){
-  PORTB = 0b00111111;
+  PORTB = bitFixMachine(0b00111111);
   delay_ms(delay_time);
-  PORTB = (1 << PB5);
+  PORTB = bitFixMachine((1 << PB5));
   delay_ms(delay_time);
 }
 
 void fanPattern(int delay_time){
   uint8_t pattern[4] = {0b00000000,0b00000100,0b00001110,0b00011111};
   for (int i = 0; i < 4; i++){
-    PORTB = pattern[i] | (1 << PB5);
+    PORTB = bitFixMachine(pattern[i] | (1 << PB5));
     delay_ms(delay_time);
   }
   for (int i = 3 - 1; i >= 1; i--){
-    PORTB = pattern[i] | (1 << PB5);
+    PORTB = bitFixMachine(pattern[i] | (1 << PB5));
     delay_ms(delay_time);
   }
-  PORTB = (1 << PB5);
+  PORTB = bitFixMachine((1 << PB5));
 }
 
 void triangleSpinPattern(int delay_time){
   uint8_t pattern[5] = {0b00010110,0b00001011,0b0010101,0b00011010,0b00001101};
   for (int i = 0; i < 4; i++){
-    PORTB = pattern[i] | (1 << PB5);
+    PORTB = bitFixMachine(pattern[i] | (1 << PB5));
     delay_ms(delay_time);
   }
 }
