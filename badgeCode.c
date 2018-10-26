@@ -63,23 +63,23 @@ void delay_ms(int count) {			// Dumbest thing, you can't pass variables directly
 }
 
 void runRoulette(uint8_t startPin){
-	uint8_t currentLED = startPin;
-	PORTB = bitFixMachine(currentLED) | (1 << PB5);
-	int delayTime = 50;
-	int delayIncrement = 10;
-	int maxDelay = 500;
-	int buttonReleased = 0;
-	int flashSpeed = 250;
-	int flashCount = 3;
-	while (1) {
-		delay_ms(delayTime);
-		if ((currentLED << 1) == (1 << PB5)){		// If currentLED is out of the LED range
-			currentLED = (1 << PB0);
-		}
-		else {
-			currentLED <<= 1;
-		}
-		PORTB = bitFixMachine(currentLED) | (1 << PB5);		// Light the LED
+  uint8_t currentLED = startPin;
+  PORTB = bitFixMachine(currentLED) | (1 << PB5);
+  int delayTime = 50;
+  int delayIncrement = 10;
+  int maxDelay = 500;
+  int buttonReleased = 0;
+  int flashSpeed = 250;
+  int flashCount = 3;
+  while (1) {
+    delay_ms(delayTime);
+    if ((currentLED << 1) == (1 << PB5)){   // If currentLED is out of the LED range
+      currentLED = (1 << PB0);
+    }
+    else {
+      currentLED <<= 1;
+    }
+    PORTB = bitFixMachine(currentLED) | (1 << PB5);   // Light the LED
 
     if (delayTime >= 250){
       delayIncrement = 30;
@@ -89,30 +89,30 @@ void runRoulette(uint8_t startPin){
       delayIncrement = 50;
     }
 
-		if (buttonReleased){									// Button has already been released, check for winner or increment delay time
+    if (buttonReleased){         // Button has already been released, check for winner or increment delay time
 
-			if (delayTime > maxDelay){										// Winner Winner Chicken Dinner! Flash the winner
-				delay_ms(delayTime*2);
-				for (int i = 0; i < flashCount*2; i++){
-					PORTB ^= bitSwapMachine(currentLED);	//	Toggle LED
-					delay_ms(flashSpeed);
-				}
+      if (delayTime > maxDelay){       // Winner Winner Chicken Dinner! Flash the winner
+        delay_ms(delayTime*2);
+        for (int i = 0; i < flashCount*2; i++){
+          PORTB ^= bitSwapMachine(currentLED);  //  Toggle LED
+          delay_ms(flashSpeed);
+        }
         PORTB = bitFixMachine((1 << PB5));     // Ensure LEDs are turned off
         if (funMode){
           delay_ms(750);       // Delay helps with special effects (or else they start too soon)
         }
-				break;									//	Break out of runRoulette
-			}
+        break;                  //  Break out of runRoulette
+      }
       else{
         delayTime += delayIncrement;
       }
-		}
-		else {
-			if (!buttonPressed()){
-				buttonReleased = 1;
-			}
-		}
-	}
+    }
+    else {
+      if (!buttonPressed()){
+        buttonReleased = 1;
+      }
+    }
+  }
 }
 
 //Variables for interrupt
