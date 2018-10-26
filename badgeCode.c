@@ -56,7 +56,7 @@ int buttonPressed() {
   }
 }
 
-void delay_ms(int count) {			// Dumbest thing, you can't pass variables directly to _delay_ms...
+void delay_ms(int count) {      // Dumbest thing, you can't pass variables directly to _delay_ms...
   while(count--) {
     _delay_ms(1);
   }
@@ -89,7 +89,7 @@ void runRoulette(uint8_t startPin){
       delayIncrement = 50;
     }
 
-    if (buttonReleased){         // Button has already been released, check for winner or increment delay time
+    if (buttonReleased){               // Button has already been released, check for winner or increment delay time
 
       if (delayTime > maxDelay){       // Winner Winner Chicken Dinner! Flash the winner
         delay_ms(delayTime*2);
@@ -97,11 +97,11 @@ void runRoulette(uint8_t startPin){
           PORTB ^= bitSwapMachine(currentLED);  //  Toggle LED
           delay_ms(flashSpeed);
         }
-        PORTB = bitFixMachine((1 << PB5));     // Ensure LEDs are turned off
+        PORTB = bitFixMachine((1 << PB5));      // Ensure LEDs are turned off
         if (funMode){
-          delay_ms(750);       // Delay helps with special effects (or else they start too soon)
+          delay_ms(750);                // Delay helps with special effects (or else they start too soon)
         }
-        break;                  //  Break out of runRoulette
+        break;                         //  Break out of runRoulette
       }
       else{
         delayTime += delayIncrement;
@@ -123,7 +123,7 @@ volatile uint8_t startingPin = (1 << PB0);
 ISR(TIMER0_OVF_vect){
   if (buttonPressed() && !programRunning){  // Checking for program running may not be needed at all..
     timesPressed++;
-    if (timesPressed >= 3){               // 64 pre-scaler at 1Mhz overflows every 0.016384s, so ~50ms to trigger
+    if (timesPressed >= 3){                // 64 pre-scaler at 1Mhz overflows every 0.016384s, so ~50ms to trigger
       programRunning = 1;
       runRoulette(startingPin);
       timesPressed = 0;
